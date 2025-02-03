@@ -7,12 +7,18 @@ import com.climedx.inosystem.dto.TelefoneDTO;
 import com.climedx.inosystem.enums.EstadoCivil;
 import com.climedx.inosystem.enums.Genero;
 import com.climedx.inosystem.enums.TipoTelefone;
+import com.climedx.inosystem.model.Caracteristicas;
+import com.climedx.inosystem.model.Endereco;
 import com.climedx.inosystem.model.Paciente;
+import com.climedx.inosystem.model.Telefone;
+import com.climedx.inosystem.repository.EnderecoRepository;
 import com.climedx.inosystem.repository.PacienteRepository;
+import com.climedx.inosystem.repository.TelefoneRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +29,12 @@ public class PacienteService {
 
     @Autowired
     private PacienteRepository pacienteRepository;
+
+    @Autowired
+    private TelefoneRepository telefoneRepository;
+
+    @Autowired
+    private EnderecoRepository enderecoRepository;
 
     public List<String> listarTiposTelefone() {
         return Arrays.stream(TipoTelefone.values())
@@ -47,6 +59,7 @@ public class PacienteService {
     public Paciente salvar(Paciente paciente) {
         if (paciente.getCaracteristicas() != null) {
             paciente.calcularIdade(); // Calcula a idade antes de salvar
+            paciente.setPacInfantil(paciente.getPacIdade() <= 16); //Define pacInfantil
             paciente.getCaracteristicas().setPaciente(paciente);
         }
 
@@ -68,6 +81,7 @@ public List<PacienteDTO> listarTodos() {
 
     pacientes.forEach(paciente -> {
         paciente.calcularIdade();
+        paciente.setPacInfantil(paciente.getPacIdade() <= 16); //Atualiza pacInfantil
         pacienteRepository.save(paciente);
     });
 
@@ -83,6 +97,7 @@ public Optional<Paciente> buscarPorId(Long id) {
     if (pacienteOptional.isPresent()) {
         Paciente paciente = pacienteOptional.get();
         paciente.calcularIdade();
+        paciente.setPacInfantil(paciente.getPacIdade() <= 16); //Atualiza pacInfantil
         pacienteRepository.save(paciente);
     }
 
@@ -90,20 +105,60 @@ public Optional<Paciente> buscarPorId(Long id) {
 }
 
 
-    // Atualizar um paciente existente
     public Optional<Paciente> atualizarPaciente(Long id, Paciente pacienteAtualizado) {
         return pacienteRepository.findById(id).map(paciente -> {
+
             paciente.setPacNome(pacienteAtualizado.getPacNome());
             paciente.setPacCpf(pacienteAtualizado.getPacCpf());
             paciente.setPacEmail(pacienteAtualizado.getPacEmail());
             paciente.setPacEstcivil(pacienteAtualizado.getPacEstcivil());
-            paciente.setTelefones(pacienteAtualizado.getTelefones());
-            paciente.setEnderecos(pacienteAtualizado.getEnderecos());
-            paciente.calcularIdade(); // Atualiza idade
-            paciente.setCaracteristicas(pacienteAtualizado.getCaracteristicas());
+            paciente.setPacNasc(pacienteAtualizado.getPacNasc());
+
+            // Atualizar Telefones corretamente
+            List<Telefone> telefonesAtualizados = new ArrayList<>();
+            for (Telefone telefone : pacienteAtualizado.getTelefones()) {
+                Telefone telefoneExistente = telefoneRepository.findById(telefone.getTelId())
+                        .orElse(telefone); // Se não existir, adicionamos como novo
+                telefoneExistente.setNumero(telefone.getNumero());
+                telefoneExistente.setTipo(telefone.getTipo());
+                telefoneExistente.setPaciente(paciente); // Assegura que o telefone pertence ao paciente
+                telefonesAtualizados.add(telefoneExistente);
+            }
+            paciente.getTelefones().clear();
+            paciente.getTelefones().addAll(telefonesAtualizados);
+
+            // Atualizar Endereços corretamente
+            List<Endereco> enderecosAtualizados = new ArrayList<>();
+            for (Endereco endereco : pacienteAtualizado.getEnderecos()) {
+                Endereco enderecoExistente = enderecoRepository.findById(endereco.getEnd_id())
+                        .orElse(endereco);
+                enderecoExistente.setRua(endereco.getRua());
+                enderecoExistente.setBairro(endereco.getBairro());
+                enderecoExistente.setCidade(endereco.getCidade());
+                enderecoExistente.setEstado(endereco.getEstado());
+                enderecoExistente.setCep(endereco.getCep());
+                enderecoExistente.setPaciente(paciente);
+                enderecosAtualizados.add(enderecoExistente);
+            }
+            paciente.getEnderecos().clear();
+            paciente.getEnderecos().addAll(enderecosAtualizados);
+
+            // 3️⃣ Atualizar Características (se existirem)
+            if (pacienteAtualizado.getCaracteristicas() != null) {
+                Caracteristicas caracteristicasExistentes = paciente.getCaracteristicas();
+                if (caracteristicasExistentes == null) {
+                    paciente.setCaracteristicas(pacienteAtualizado.getCaracteristicas());
+                } else {
+                    caracteristicasExistentes.setPeso(pacienteAtualizado.getCaracteristicas().getPeso());
+                    caracteristicasExistentes.setAltura(pacienteAtualizado.getCaracteristicas().getAltura());
+                    caracteristicasExistentes.setGenero(pacienteAtualizado.getCaracteristicas().getGenero());
+                }
+            }
+
             return pacienteRepository.save(paciente);
         });
     }
+
 
     // Remover paciente por ID
     public boolean remover(Long id) {
@@ -122,8 +177,8 @@ public Optional<Paciente> buscarPorId(Long id) {
         dto.setPacCpf(paciente.getPacCpf());
         dto.setPacNasc(paciente.getPacNasc());  // Adiciona a data de nascimento
         dto.setPacIdade(paciente.getPacIdade()); // Adiciona a idade calculada
+        dto.setPacInfantil(paciente.getPacIdade() <= 16); //Define pacInfantil no DTO
         dto.setPacEmail(paciente.getPacEmail());
-
         dto.setPacEstcivil(paciente.getPacEstcivil());
 
         dto.setTelefones(paciente.getTelefones().stream()

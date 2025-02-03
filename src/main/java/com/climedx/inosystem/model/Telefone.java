@@ -19,7 +19,7 @@ public class Telefone {
     private Long telId;
 
     @ManyToOne
-    @JoinColumn(name = "paciente_id", nullable = false)
+    @JoinColumn(name = "pac_id", nullable = false)
     @JsonBackReference // Evita loop infinito ao serializar JSON
     private Paciente paciente;
 

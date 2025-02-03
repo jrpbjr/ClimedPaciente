@@ -52,25 +52,13 @@ public class PacienteController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // Atualizar paciente por ID
+    // Atualizar paciente por ID (Correção aplicada)
     @PutMapping("/{id}")
     public ResponseEntity<PacienteDTO> atualizarPaciente(@PathVariable Long id, @RequestBody Paciente pacienteAtualizado) {
-        Optional<Paciente> pacienteOptional = pacienteService.buscarPorId(id);
-        if (pacienteOptional.isPresent()) {
-            Paciente paciente = pacienteOptional.get();
-            paciente.setPacNome(pacienteAtualizado.getPacNome());
-            paciente.setPacCpf(pacienteAtualizado.getPacCpf());
-            paciente.setPacEmail(pacienteAtualizado.getPacEmail());
-            paciente.setPacEstcivil(pacienteAtualizado.getPacEstcivil());
-            paciente.setTelefones(pacienteAtualizado.getTelefones());
-            paciente.setEnderecos(pacienteAtualizado.getEnderecos());
-            paciente.setCaracteristicas(pacienteAtualizado.getCaracteristicas());
+        Optional<Paciente> pacienteSalvo = pacienteService.atualizarPaciente(id, pacienteAtualizado);
 
-            Paciente pacienteSalvo = pacienteService.salvar(paciente);
-            return ResponseEntity.ok(pacienteService.converterParaDTO(pacienteSalvo));
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return pacienteSalvo.map(p -> ResponseEntity.ok(pacienteService.converterParaDTO(p)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     // Remover paciente por ID
