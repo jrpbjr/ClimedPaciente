@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.List;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -18,6 +19,8 @@ public class PacienteDTO {
     private String pacCpf;
     private String pacEmail;
     private EstadoCivil pacEstcivil;
+    private LocalDate pacNasc; // Data de nascimento
+    private Integer pacIdade;  // Idade calculada
     private List<TelefoneDTO> telefones;
     private List<EnderecoDTO> enderecos;
     private CaracteristicasDTO caracteristicas;
