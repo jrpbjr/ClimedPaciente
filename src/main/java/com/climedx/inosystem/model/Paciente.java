@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 
 @Entity
@@ -34,7 +35,12 @@ public class Paciente {
     @Column(length = 60)
     private String pacRg;
 
-    private LocalDate pacNasc;
+    @NotNull(message = "A data de nascimento é obrigatória.")
+    @Column(nullable = false)
+    private LocalDate pacNasc; // Data de nascimento
+
+    @Column(nullable = false)
+    private Integer pacIdade; // Idade calculada
 
     @NotEmpty(message = "O e-mail é obrigatório.")
     @Email(message = "O e-mail deve ser válido.")
@@ -57,4 +63,18 @@ public class Paciente {
     @JsonManagedReference
     @OneToOne(mappedBy = "paciente", cascade = CascadeType.ALL, orphanRemoval = true)
     private Caracteristicas caracteristicas;
+
+    // Método para calcular a idade
+    public void calcularIdade() {
+        if (this.pacNasc != null) {
+            this.pacIdade = Period.between(this.pacNasc, LocalDate.now()).getYears();
+        }
+    }
+
+    // Garante que a idade seja calculada antes de salvar ou atualizar
+    @PrePersist
+    @PreUpdate
+    private void preSalvar() {
+        calcularIdade();
+    }
 }

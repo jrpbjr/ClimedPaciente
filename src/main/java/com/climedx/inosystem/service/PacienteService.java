@@ -9,6 +9,7 @@ import com.climedx.inosystem.enums.Genero;
 import com.climedx.inosystem.enums.TipoTelefone;
 import com.climedx.inosystem.model.Paciente;
 import com.climedx.inosystem.repository.PacienteRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +46,7 @@ public class PacienteService {
 
     public Paciente salvar(Paciente paciente) {
         if (paciente.getCaracteristicas() != null) {
+            paciente.calcularIdade(); // Calcula a idade antes de salvar
             paciente.getCaracteristicas().setPaciente(paciente);
         }
 
@@ -59,17 +61,34 @@ public class PacienteService {
         return pacienteRepository.save(paciente);
     }
 
-    public List<PacienteDTO> listarTodos() {
-        return pacienteRepository.findAll()
-                .stream()
-                .map(this::converterParaDTO) // Corrigido
-                .collect(Collectors.toList());
+//Listar todos os pacientes e atualizar idade no banco
+@Transactional
+public List<PacienteDTO> listarTodos() {
+    List<Paciente> pacientes = pacienteRepository.findAll();
+
+    pacientes.forEach(paciente -> {
+        paciente.calcularIdade();
+        pacienteRepository.save(paciente);
+    });
+
+    return pacientes.stream()
+            .map(this::converterParaDTO)
+            .collect(Collectors.toList());
+}
+// Buscar um paciente por ID e atualizar idade no banco
+@Transactional
+public Optional<Paciente> buscarPorId(Long id) {
+    Optional<Paciente> pacienteOptional = pacienteRepository.findById(id);
+
+    if (pacienteOptional.isPresent()) {
+        Paciente paciente = pacienteOptional.get();
+        paciente.calcularIdade();
+        pacienteRepository.save(paciente);
     }
 
-    // Buscar um paciente por ID
-    public Optional<Paciente> buscarPorId(Long id) {
-        return pacienteRepository.findById(id);
-    }
+    return pacienteOptional;
+}
+
 
     // Atualizar um paciente existente
     public Optional<Paciente> atualizarPaciente(Long id, Paciente pacienteAtualizado) {
@@ -80,6 +99,7 @@ public class PacienteService {
             paciente.setPacEstcivil(pacienteAtualizado.getPacEstcivil());
             paciente.setTelefones(pacienteAtualizado.getTelefones());
             paciente.setEnderecos(pacienteAtualizado.getEnderecos());
+            paciente.calcularIdade(); // Atualiza idade
             paciente.setCaracteristicas(pacienteAtualizado.getCaracteristicas());
             return pacienteRepository.save(paciente);
         });
@@ -100,7 +120,10 @@ public class PacienteService {
         dto.setPacId(paciente.getPacId());
         dto.setPacNome(paciente.getPacNome());
         dto.setPacCpf(paciente.getPacCpf());
+        dto.setPacNasc(paciente.getPacNasc());  // Adiciona a data de nascimento
+        dto.setPacIdade(paciente.getPacIdade()); // Adiciona a idade calculada
         dto.setPacEmail(paciente.getPacEmail());
+
         dto.setPacEstcivil(paciente.getPacEstcivil());
 
         dto.setTelefones(paciente.getTelefones().stream()
