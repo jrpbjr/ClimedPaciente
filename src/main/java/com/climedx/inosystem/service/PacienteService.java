@@ -16,6 +16,8 @@ import com.climedx.inosystem.repository.PacienteRepository;
 import com.climedx.inosystem.repository.TelefoneRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -76,18 +78,18 @@ public class PacienteService {
 
 //Listar todos os pacientes e atualizar idade no banco
 @Transactional
-public List<PacienteDTO> listarTodos() {
-    List<Paciente> pacientes = pacienteRepository.findAll();
+public Page<PacienteDTO> listarTodos(Pageable pageable) {
+    Page<Paciente> pacientesPage = pacienteRepository.findAll(pageable);
 
-    pacientes.forEach(paciente -> {
+    // Atualizar idade e infantil antes de converter
+    pacientesPage.forEach(paciente -> {
         paciente.calcularIdade();
-        paciente.setPacInfantil(paciente.getPacIdade() <= 16); //Atualiza pacInfantil
+        paciente.setPacInfantil(paciente.getPacIdade() <= 16);
         pacienteRepository.save(paciente);
     });
 
-    return pacientes.stream()
-            .map(this::converterParaDTO)
-            .collect(Collectors.toList());
+    // Converter para DTO e retornar um Page<PacienteDTO>
+    return pacientesPage.map(this::converterParaDTO);
 }
 // Buscar um paciente por ID e atualizar idade no banco
 @Transactional
