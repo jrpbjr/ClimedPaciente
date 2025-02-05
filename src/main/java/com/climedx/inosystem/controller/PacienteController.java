@@ -4,6 +4,8 @@ import com.climedx.inosystem.dto.PacienteDTO;
 import com.climedx.inosystem.model.Paciente;
 import com.climedx.inosystem.service.PacienteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +42,8 @@ public class PacienteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PacienteDTO>> listarPacientes() {
-        return ResponseEntity.ok(pacienteService.listarTodos());
+    public ResponseEntity<Page<PacienteDTO>> listarPacientes(Pageable pageable) {
+        return ResponseEntity.ok(pacienteService.listarTodos(pageable));
     }
 
     // Buscar paciente por ID
