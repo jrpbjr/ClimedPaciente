@@ -3,7 +3,6 @@ package com.climedx.inosystem.model;
 import com.climedx.inosystem.enums.TipoTelefone;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 
 @Entity
@@ -19,7 +18,7 @@ public class Telefone {
     private Long telId;
 
     @ManyToOne
-    @JoinColumn(name = "paciente_id", nullable = false)
+    @JoinColumn(name = "pac_id", nullable = false)
     @JsonBackReference // Evita loop infinito ao serializar JSON
     private Paciente paciente;
 

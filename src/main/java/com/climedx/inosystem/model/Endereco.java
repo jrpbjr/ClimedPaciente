@@ -2,7 +2,6 @@ package com.climedx.inosystem.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 
 @Entity
@@ -15,10 +14,10 @@ public class Endereco {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long end_id;
 
     @ManyToOne
-    @JoinColumn(name = "paciente_id", nullable = false)
+    @JoinColumn(name = "pac_id", nullable = false)
     @JsonBackReference // Evita loop infinito ao serializar JSON
     private Paciente paciente;
 

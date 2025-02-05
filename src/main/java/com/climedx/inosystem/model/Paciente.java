@@ -42,6 +42,9 @@ public class Paciente {
     @Column(nullable = false)
     private Integer pacIdade; // Idade calculada
 
+    @Column(nullable = false, columnDefinition = "BIT(1) DEFAULT 0")
+    private boolean pacInfantil;  // Se true (1), é menor de 16 anos; caso contrário, false (0)
+
     @NotEmpty(message = "O e-mail é obrigatório.")
     @Email(message = "O e-mail deve ser válido.")
     @Column(nullable = false, length = 180, unique = true)
@@ -68,6 +71,7 @@ public class Paciente {
     public void calcularIdade() {
         if (this.pacNasc != null) {
             this.pacIdade = Period.between(this.pacNasc, LocalDate.now()).getYears();
+            this.pacInfantil = this.pacIdade <= 16;
         }
     }
 

@@ -20,8 +20,10 @@ public class PacienteDTO {
     private String pacEmail;
     private EstadoCivil pacEstcivil;
     private LocalDate pacNasc; // Data de nascimento
+    private boolean pacInfantil;
     private Integer pacIdade;  // Idade calculada
     private List<TelefoneDTO> telefones;
     private List<EnderecoDTO> enderecos;
     private CaracteristicasDTO caracteristicas;
+
 }
